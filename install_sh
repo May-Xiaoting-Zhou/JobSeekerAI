@@ -1,0 +1,11 @@
+# 安装Python依赖
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+
+# 启动后端服务
+uvicorn backend.main:app --reload
+
+# 前端运行（需先安装Node.js）
+cd frontend
+npm install
+npm start
