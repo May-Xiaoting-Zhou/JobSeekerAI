@@ -2,12 +2,7 @@ import React, { useState } from 'react';
 import { Input, Button, Avatar } from 'antd';
 import { SendOutlined, RobotOutlined, UserOutlined } from '@ant-design/icons';
 import './App.css';
-
-interface Message {
-  text: string;
-  sender: 'user' | 'ai';
-  timestamp: Date;
-}
+import { Message } from './types';
 
 function App() {
   const [message, setMessage] = useState('');
@@ -16,45 +11,47 @@ function App() {
   const handleSend = async () => {
     if (!message.trim()) return;
     
-    // Add user message to chat
     const userMessage: Message = {
       text: message,
       sender: 'user',
       timestamp: new Date()
     };
     setMessages(prev => [...prev, userMessage]);
-    
-    // Clear input field
     setMessage('');
     
     try {
-      // Send message to backend
+      console.log('Sending message to backend:', message);
+      
       const response = await fetch('http://localhost:8000/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ message: message }),
+        body: JSON.stringify({ 
+          message: message,
+          conversation_id: 'default'
+        }),
       });
       
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Received response from backend:', data);
       
-      // Add AI response to chat
       const aiMessage: Message = {
         text: data.response,
         sender: 'ai',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiMessage]);
+      
     } catch (error) {
-      console.error('Error:', error);
-      // Optionally add error message to chat
+      console.error('Error in handleSend:', error);
       const errorMessage: Message = {
-        text: "Sorry, there was an error processing your message.",
+        text: error instanceof Error ? error.message : 'Failed to send message',
         sender: 'ai',
         timestamp: new Date()
       };
@@ -80,7 +77,7 @@ function App() {
                 )}
               </div>
               <div className="message-content">
-                {msg.text}
+                {typeof msg.text === 'string' ? msg.text : 'Invalid message format'}
               </div>
             </div>
           ))}
