@@ -11,7 +11,7 @@ from typing import Optional
 
 app = FastAPI()
 job_search = JobSearchAPI()
-job_matcher = JobMatcher()
+job_matcher = JobMatcher(use_ollama=True)  # Explicitly use Ollama
 
 # Add CORS middleware
 app.add_middleware(
@@ -60,31 +60,6 @@ async def parse_resume(file: UploadFile):
     
     return {"text": text[:500], "skills": skills}
 
-async def get_llm_response(user_message: str) -> str:
-    """Get response from Ollama LLM"""
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "llama2",
-                    "prompt": user_message,
-                    "system": "You are a helpful AI assistant focused on helping users find jobs. Keep responses concise and professional."
-                }
-            ) as response:
-                if response.status == 200:
-                    full_response = ""
-                    async for line in response.content:
-                        line_json = json.loads(line)
-                        if "response" in line_json:
-                            full_response += line_json["response"]
-                    return full_response
-                else:
-                    return "I apologize, but I'm having trouble processing your request at the moment."
-    except Exception as e:
-        print(f"Error calling LLM: {e}")
-        return "I apologize, but I'm having trouble connecting to my language model at the moment."
-
 @app.get("/api/jobs/search")
 async def search_jobs(query: str, location: str = "Remote"):
     results = await job_search.search_all(query, location)
@@ -93,36 +68,57 @@ async def search_jobs(query: str, location: str = "Remote"):
 @app.post("/chat")
 async def chat_message(message: ChatMessage):
     try:
-        print(f"Received message: {message.message}")  # Debug log
+        print(f"\n[DEBUG] ====== New Chat Message ======")
+        print(f"[DEBUG] Received message: {message.message}")
+        print(f"[DEBUG] Conversation ID: {message.conversation_id}")
         
-        # First, get LLM response
-        llm_response = await get_llm_response(message.message)
-        print(f"LLM response: {llm_response}")  # Debug log
+        # First, get LLM response using JobMatcher's Ollama implementation
+        print("[DEBUG] Getting LLM response...")
+        llm_response = await job_matcher.get_llm_response(message.message)
+        print(f"[DEBUG] LLM response received: {llm_response[:100]}...")
         
         # Add message to conversation history
+        print("[DEBUG] Adding message to conversation history")
         job_matcher.add_to_conversation(message.message)
         
         # Check for job search intent
-        if any(word in message.message.lower() for word in ['job', 'work', 'position', 'hiring', 'career', 'employment']):
-            # Use job matcher to find relevant positions
-            results = job_matcher.search_jobs(message.message)
-            print(f"Job search results: {json.dumps(results, indent=2)}")  # Debug log
-            
-            if results["status"] == "success":
-                # Combine LLM response with job search results
-                combined_response = f"{llm_response}\n\nI found some relevant job opportunities:\n\n{results['message']}"
-                return {"response": combined_response}
-            else:
-                # Return LLM response with a prompt for more details
+        job_related_words = ['job', 'work', 'position', 'hiring', 'career', 'employment']
+        has_job_intent = any(word in message.message.lower() for word in job_related_words)
+        print(f"[DEBUG] Has job search intent: {has_job_intent}")
+        
+        if has_job_intent:
+            try:
+                print("[DEBUG] Starting job search...")
+                # Use job matcher to find relevant positions
+                results = job_matcher.search_jobs.invoke({"query": message.message})
+                print(f"[DEBUG] Job search completed. Status: {results.get('status')}")
+                print(f"[DEBUG] Full results: {json.dumps(results, indent=2)}")
+                
+                if results["status"] == "success":
+                    # Combine LLM response with job search results
+                    print("[DEBUG] Combining LLM response with job results")
+                    combined_response = f"{llm_response}\n\nI found some relevant job opportunities:\n\n{results['message']}"
+                    return {"response": combined_response}
+                else:
+                    print("[DEBUG] No successful job results, returning prompt for more details")
+                    return {
+                        "response": f"{llm_response}\n\nI couldn't find specific job listings matching your criteria. Could you provide more details about what type of position you're looking for?"
+                    }
+            except Exception as search_error:
+                print(f"[ERROR] Error during job search: {str(search_error)}")
                 return {
-                    "response": f"{llm_response}\n\nI couldn't find specific job listings matching your criteria. Could you provide more details about what type of position you're looking for?"
+                    "response": f"{llm_response}\n\nI encountered an error while searching for jobs. Please try again with more specific criteria."
                 }
         
         # For non-job queries, just return the LLM response
+        print("[DEBUG] No job intent detected, returning LLM response only")
         return {"response": llm_response}
         
     except Exception as e:
-        print(f"Error in chat_message: {e}")  # Debug log
+        print(f"[ERROR] Error in chat_message: {str(e)}")
+        print(f"[ERROR] Error type: {type(e)}")
+        import traceback
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=str(e)

@@ -12,10 +12,10 @@ load_dotenv()
 class JobSearchAPI:
     def __init__(self):
         # Initialize API keys from environment variables
-        self.jsearch_key = os.getenv("JSEARCH_API_KEY")
-        self.jooble_key = os.getenv("JOOBLE_API_KEY")
-        self.adzuna_id = os.getenv("ADZUNA_APP_ID")
-        self.adzuna_key = os.getenv("ADZUNA_API_KEY")
+        self.jsearch_key = os.getenv("af5387528dmshcbcc76d1ab0bffdp123390jsn76b3a3037d88")
+        self.jooble_key = os.getenv("f1014aa9-bb6d-4f32-892c-cc74417de667")
+        self.adzuna_id = os.getenv("f77f299a")
+        self.adzuna_key = os.getenv("86cc964e1e048302e828a3b2e09174cf")
 
         # Define patterns for extracting job information
         self.patterns = {
