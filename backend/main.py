@@ -8,6 +8,10 @@ import datetime
 from scripts.job_search import JobSearchAPI
 from ai_agent.job_matcher import build_agent, JobMatcher
 from typing import Optional
+from utils.logger import get_logger
+
+# Set up logger for this module
+logger = get_logger('main')
 
 app = FastAPI()
 job_search = JobSearchAPI()
@@ -30,7 +34,7 @@ class ChatMessage(BaseModel):
 
 @app.websocket("/api/chat")
 async def chat_endpoint(websocket: WebSocket):
-    print("WebSocket connected")
+    logger.info("WebSocket connected")
     await websocket.accept()
     while True:
         try:
@@ -41,7 +45,7 @@ async def chat_endpoint(websocket: WebSocket):
             response = {"response": f"Received: {"Xiaoting ZHou"}", "jobs": []}
             await websocket.send_json(response)
         except Exception as e:
-            print(f"Error: {e}")
+            logger.error(f"Error: {e}")
             break
 
 @app.post("/api/resume/parse")
@@ -68,57 +72,57 @@ async def search_jobs(query: str, location: str = "Remote"):
 @app.post("/chat")
 async def chat_message(message: ChatMessage):
     try:
-        print(f"\n[DEBUG] ====== New Chat Message ======")
-        print(f"[DEBUG] Received message: {message.message}")
-        print(f"[DEBUG] Conversation ID: {message.conversation_id}")
+        logger.debug("====== New Chat Message ======")
+        logger.debug(f"Received message: {message.message}")
+        logger.debug(f"Conversation ID: {message.conversation_id}")
         
         # First, get LLM response using JobMatcher's Ollama implementation
-        print("[DEBUG] Getting LLM response...")
+        logger.debug("Getting LLM response...")
         llm_response = await job_matcher.get_llm_response(message.message)
-        print(f"[DEBUG] LLM response received: {llm_response[:100]}...")
+        logger.debug(f"LLM response received: {llm_response[:100]}...")
         
         # Add message to conversation history
-        print("[DEBUG] Adding message to conversation history")
+        logger.debug("Adding message to conversation history")
         job_matcher.add_to_conversation(message.message)
         
         # Check for job search intent
         job_related_words = ['job', 'work', 'position', 'hiring', 'career', 'employment']
         has_job_intent = any(word in message.message.lower() for word in job_related_words)
-        print(f"[DEBUG] Has job search intent: {has_job_intent}")
+        logger.debug(f"Has job search intent: {has_job_intent}")
         
         if has_job_intent:
             try:
-                print("[DEBUG] Starting job search...")
+                logger.debug("Starting job search...")
                 # Use job matcher to find relevant positions
                 results = job_matcher.search_jobs.invoke({"query": message.message})
-                print(f"[DEBUG] Job search completed. Status: {results.get('status')}")
-                print(f"[DEBUG] Full results: {json.dumps(results, indent=2)}")
+                logger.debug(f"Job search completed. Status: {results.get('status')}")
+                logger.debug(f"Full results: {json.dumps(results, indent=2)}")
                 
                 if results["status"] == "success":
                     # Combine LLM response with job search results
-                    print("[DEBUG] Combining LLM response with job results")
+                    logger.debug("Combining LLM response with job results")
                     combined_response = f"{llm_response}\n\nI found some relevant job opportunities:\n\n{results['message']}"
                     return {"response": combined_response}
                 else:
-                    print("[DEBUG] No successful job results, returning prompt for more details")
+                    logger.debug("No successful job results, returning prompt for more details")
                     return {
                         "response": f"{llm_response}\n\nI couldn't find specific job listings matching your criteria. Could you provide more details about what type of position you're looking for?"
                     }
             except Exception as search_error:
-                print(f"[ERROR] Error during job search: {str(search_error)}")
+                logger.error(f"Error during job search: {str(search_error)}")
                 return {
                     "response": f"{llm_response}\n\nI encountered an error while searching for jobs. Please try again with more specific criteria."
                 }
         
         # For non-job queries, just return the LLM response
-        print("[DEBUG] No job intent detected, returning LLM response only")
+        logger.debug("No job intent detected, returning LLM response only")
         return {"response": llm_response}
         
     except Exception as e:
-        print(f"[ERROR] Error in chat_message: {str(e)}")
-        print(f"[ERROR] Error type: {type(e)}")
+        logger.error(f"Error in chat_message: {str(e)}")
+        logger.error(f"Error type: {type(e)}")
         import traceback
-        print(f"[ERROR] Traceback: {traceback.format_exc()}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=str(e)
@@ -131,5 +135,5 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    print("Starting FastAPI server...")
+    logger.info("Starting FastAPI server...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

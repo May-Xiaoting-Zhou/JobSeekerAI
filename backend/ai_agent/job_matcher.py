@@ -11,6 +11,10 @@ import aiohttp
 from langchain_ollama import OllamaLLM
 import json
 from pydantic import BaseModel, Field
+from utils.logger import get_logger
+
+# Set up logger for this module
+logger = get_logger('job_matcher')
 
 # Load environment variables
 load_dotenv()
@@ -29,15 +33,15 @@ class JobMatcher:
         self.conversation_history = []
         try:
             if use_ollama:
-                print("[DEBUG] Initializing Ollama LLM")
+                logger.debug("Initializing Ollama LLM")
                 self.llm = OllamaLLM(model="llama2")
             else:
-                print("[DEBUG] Initializing OpenAI LLM")
+                logger.debug("Initializing OpenAI LLM")
                 if not os.getenv("OPENAI_API_KEY"):
                     raise ValueError("OPENAI_API_KEY not found in environment variables")
                 self.llm = ChatOpenAI(temperature=0)
         except Exception as e:
-            print(f"Warning: Could not initialize LLM: {e}")
+            logger.warning(f"Could not initialize LLM: {e}")
             self.llm = None
         
         # Initialize tools after everything else is set up
@@ -45,7 +49,7 @@ class JobMatcher:
     
     def _initialize_tools(self):
         """Initialize and bind the tool methods to the instance"""
-        print("[DEBUG] Initializing tools...")
+        logger.debug("Initializing tools...")
         try:
             # Create bound method instances
             search_jobs_bound = self._search_jobs_impl.__get__(self, JobMatcher)
@@ -60,9 +64,9 @@ class JobMatcher:
                 args_schema=SearchInput
             )(refine_search_bound)
             
-            print("[DEBUG] Tools initialized successfully")
+            logger.debug("Tools initialized successfully")
         except Exception as e:
-            print(f"[ERROR] Error initializing tools: {e}")
+            logger.error(f"Error initializing tools: {e}")
             raise
 
     def add_to_conversation(self, message: str, sender: str = 'user'):
@@ -82,28 +86,28 @@ class JobMatcher:
         Returns:
             dict: A dictionary containing search results with job matches and status
         """
-        print(f"[DEBUG] search_jobs called with query: {query}")
+        logger.debug(f"search_jobs called with query: {query}")
         
         # Add current query to conversation
-        print(f"[DEBUG] Adding query to conversation: {query}")
+        logger.debug(f"Adding query to conversation: {query}")
         self.add_to_conversation(query)
         
         # Extract job parameters from conversation history
-        print(f"[DEBUG] Current conversation history: {self.conversation_history}")
+        logger.debug(f"Current conversation history: {self.conversation_history}")
         params = self.job_search_api.extract_job_params(self.conversation_history)
-        print(f"[DEBUG] Extracted job parameters: {params}")
+        logger.debug(f"Extracted job parameters: {params}")
         
         # Run async job search in sync context
         try:
             loop = asyncio.get_event_loop()
-            print("[DEBUG] Starting job search")
+            logger.debug("Starting job search")
             job_results = loop.run_until_complete(
                 self.job_search_api.search_all(query, params=params)
             )
-            print(f"[DEBUG] Job search results status: {job_results.get('status')}")
-            print(f"[DEBUG] Number of jobs found: {len(job_results.get('jobs', []))}")
+            logger.debug(f"Job search results status: {job_results.get('status')}")
+            logger.debug(f"Number of jobs found: {len(job_results.get('jobs', []))}")
         except Exception as e:
-            print(f"[ERROR] Error in job search: {str(e)}")
+            logger.error(f"Error in job search: {str(e)}")
             return {
                 "status": "error",
                 "message": f"Error during job search: {str(e)}",
@@ -143,7 +147,7 @@ class JobMatcher:
         Returns:
             dict: A dictionary containing refined search results with job matches and status
         """
-        print(f"[DEBUG] Refining search with query: {query}")
+        logger.debug(f"Refining search with query: {query}")
         self.add_to_conversation(query)
         return self._search_jobs_impl(query)
 
@@ -201,7 +205,7 @@ class JobMatcher:
                     else:
                         return "I apologize, but I'm having trouble processing your request at the moment."
         except Exception as e:
-            print(f"Error calling Ollama LLM: {e}")
+            logger.error(f"Error calling Ollama LLM: {e}")
             return "I apologize, but I'm having trouble connecting to the language model at the moment."
 
 def build_agent():

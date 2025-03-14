@@ -5,6 +5,10 @@ import os
 import re
 from datetime import datetime
 from dotenv import load_dotenv
+from utils.logger import get_logger
+
+# Set up logger for this module
+logger = get_logger('job_search')
 
 # Load environment variables
 load_dotenv()
@@ -54,7 +58,7 @@ class JobSearchAPI:
             } for job in data.get("data", [])]
             
         except Exception as e:
-            print(f"JSearch API error: {e}")
+            logger.error(f"JSearch API error: {e}")
             return []
 
     async def search_remotive(self, query: str) -> List[Dict]:
@@ -79,7 +83,7 @@ class JobSearchAPI:
             } for job in data.get("jobs", [])]
             
         except Exception as e:
-            print(f"Remotive API error: {e}")
+            logger.error(f"Remotive API error: {e}")
             return []
 
     def extract_job_params(self, conversation_history: List[Dict]) -> Dict:
@@ -211,4 +215,4 @@ class JobSearchAPI:
 🔗 {job['url']}
 📅 Posted: {job['posted_date']}
 🏷️ Type: {job['job_type']}
-""" 
+"""
