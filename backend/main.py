@@ -1,6 +1,8 @@
 from fastapi import FastAPI, UploadFile, WebSocket, HTTPException
 from pydantic import BaseModel
-import spacy
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.tag import pos_tag
 from fastapi.middleware.cors import CORSMiddleware
 import aiohttp
 import json
@@ -12,6 +14,15 @@ from utils.logger import get_logger
 
 # Set up logger for this module
 logger = get_logger('main')
+
+# Download necessary NLTK data
+try:
+    nltk.download('punkt', quiet=True)
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+    nltk.download('maxent_ne_chunker', quiet=True)
+    nltk.download('words', quiet=True)
+except Exception as e:
+    logger.warning(f"Failed to download NLTK data: {e}")
 
 app = FastAPI()
 job_search = JobSearchAPI()
@@ -25,8 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-nlp = spacy.load("en_core_web_sm")  # Load Spacy model
 
 class ChatMessage(BaseModel):
     message: str
@@ -42,7 +51,7 @@ async def chat_endpoint(websocket: WebSocket):
             message = ChatMessage(**data)
             # Logic for chat
             # response = {"response": f"Received: {message.message}", "jobs": []}
-            response = {"response": f"Received: {"Xiaoting ZHou"}", "jobs": []}
+            response = {"response": "Received: Xiaoting ZHou", "jobs": []}
             await websocket.send_json(response)
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -52,15 +61,30 @@ async def chat_endpoint(websocket: WebSocket):
 async def parse_resume(file: UploadFile):
     import PyPDF2
     from io import BytesIO
+    from nltk.chunk import ne_chunk
     
     # Parse PDF
     pdf_content = await file.read()
     reader = PyPDF2.PdfReader(BytesIO(pdf_content))
     text = "\n".join([page.extract_text() for page in reader.pages])
     
-    # Extract entities
-    doc = nlp(text)
-    skills = [ent.text for ent in doc.ents if ent.label_ == "SKILL"]
+    # Extract entities using NLTK
+    tokens = word_tokenize(text)
+    tagged = pos_tag(tokens)
+    entities = ne_chunk(tagged)
+    
+    # Extract skills (simplified approach)
+    skill_keywords = [
+        "python", "javascript", "java", "c++", "react", "angular", "vue", 
+        "node", "express", "django", "flask", "fastapi", "sql", "nosql", 
+        "mongodb", "postgresql", "mysql", "docker", "kubernetes", "aws", 
+        "azure", "gcp", "git", "agile", "scrum", "machine learning", "ai"
+    ]
+    
+    skills = []
+    for word in tokens:
+        if word.lower() in skill_keywords:
+            skills.append(word)
     
     return {"text": text[:500], "skills": skills}
 

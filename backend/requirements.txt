@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+nltk
+PyPDF2
+aiohttp
+python-dotenv
+langchain-openai
+langchain-ollama
+langchain

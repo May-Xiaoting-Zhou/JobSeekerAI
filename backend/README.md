@@ -6,47 +6,39 @@ This backend project uses [uv](https://github.com/astral-sh/uv) for Python packa
 
 The project is configured with a virtual environment in the `.venv` directory. All dependencies are managed using uv.
 
-## Using the Management Script
+## Using Just for Environment Management
 
-A management script `uv_manage.sh` is provided to simplify common tasks:
+The project now uses [Just](https://github.com/casey/just) as a command runner for managing both frontend and backend environments. The backend-specific commands are:
 
-### Activate the Virtual Environment
+### Setup the Backend Environment
 
 ```bash
-./uv_manage.sh activate
+just setup-backend
 ```
 
-### Install Dependencies
+This will create a virtual environment and install all dependencies.
+
+### Run the Backend Server
 
 ```bash
-./uv_manage.sh install
-```
-
-### Update Dependencies
-
-```bash
-./uv_manage.sh update
+just run-backend
 ```
 
 ### Add a New Dependency
 
 ```bash
-./uv_manage.sh add <package_name>
+just add-backend-dep <package_name>
 ```
 
 This will install the package and add it to the requirements.txt file.
 
-### Run the Backend Server
+### Update Dependencies
 
 ```bash
-./uv_manage.sh run
+just update-deps
 ```
 
-### Get Help
-
-```bash
-./uv_manage.sh help
-```
+This will update all dependencies for both backend and frontend.
 
 ## Manual UV Commands
 
@@ -67,19 +59,19 @@ source .venv/bin/activate
 ### Install Dependencies
 
 ```bash
-uv pip install -r ../requirements.txt
+uv sync
 ```
 
 ### Install a Specific Package
 
 ```bash
-uv pip install <package_name>
+uv add <package_name>
 ```
 
 ### Update Dependencies
 
 ```bash
-uv pip install --upgrade -r ../requirements.txt
+uv sync --upgrade
 ```
 
 ## Benefits of Using UV

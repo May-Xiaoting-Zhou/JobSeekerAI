@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobseekerai-backend"
+version = "0.1.0"
+description = "Backend for JobSeekerAI application"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+    "nltk",
+    "PyPDF2",
+    "aiohttp",
+    "python-dotenv",
+    "langchain-openai",
+    "langchain-ollama",
+    "langchain",
+]
+
+[tool.setuptools]
+packages = ["ai_agent", "scripts", "utils"]

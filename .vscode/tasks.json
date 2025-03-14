@@ -1,0 +1,106 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Setup Backend",
+            "type": "shell",
+            "command": "just setup-backend",
+            "problemMatcher": [],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Setup Frontend",
+            "type": "shell",
+            "command": "just setup-frontend",
+            "problemMatcher": [],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Setup All",
+            "type": "shell",
+            "command": "just setup-all",
+            "problemMatcher": [],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Run Backend",
+            "type": "shell",
+            "command": "just run-backend",
+            "problemMatcher": [],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "isBackground": true
+        },
+        {
+            "label": "Run Frontend",
+            "type": "shell",
+            "command": "just run-frontend",
+            "problemMatcher": [],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "isBackground": true
+        },
+        {
+            "label": "Run All (tmux)",
+            "type": "shell",
+            "command": "just run-all",
+            "problemMatcher": [],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Build Frontend",
+            "type": "shell",
+            "command": "just build-frontend",
+            "problemMatcher": [],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Update Dependencies",
+            "type": "shell",
+            "command": "just update-deps",
+            "problemMatcher": [],
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Clean Project",
+            "type": "shell",
+            "command": "just clean",
+            "problemMatcher": [],
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}
