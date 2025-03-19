@@ -36,20 +36,6 @@ The project consists of the following components:
    scoop install just
    ```
 
-3. Setup the project environments:
-   ```sh
-   # Setup both frontend and backend environments
-   just setup-all
-   
-   # Or setup them separately
-   just setup-backend
-   just setup-frontend
-   ```
-
-## Usage
-
-The project uses Just commands to manage both frontend and backend environments:
-
 ### Environment Management
 ```sh
 # Setup both environments

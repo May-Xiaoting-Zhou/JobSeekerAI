@@ -16,9 +16,7 @@ setup-backend:
     
     # Check if uv is installed
     if ! command -v uv &> /dev/null; then
-        echo "Error: uv is not installed. Please install it first."
-        echo "You can install uv with: pip install uv"
-        exit 1
+        curl -LsSf https://astral.sh/uv/install.sh | less
     fi
     
     # Get the absolute path to the project root
@@ -75,7 +73,7 @@ run-frontend:
     #!/usr/bin/env bash
     echo "==== Starting Frontend Server ===="
     PROJECT_ROOT="$(pwd)"
-    cd "${PROJECT_ROOT}/{{frontend_dir}}" && npm run dev
+    cd "${PROJECT_ROOT}/{{frontend_dir}}" && npm run start
 
 # Run both servers concurrently (requires tmux)
 run-all:
