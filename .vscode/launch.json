@@ -1,54 +1,12 @@
 {
-    "version": "0.2.0",
     "configurations": [
         {
-            "name": "FastAPI Backend",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "backend.main:app",
-                "--reload",
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "8000"
-            ],
-            "cwd": "${workspaceFolder}",
-            "justMyCode": false,
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
             "name": "Python: Current File",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "${workspaceFolder}/backend/main.py",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Frontend (Vite)",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}/frontend",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run",
-                "dev"
-            ],
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "serverReadyAction": {
-                "pattern": "Local:.+(https?://\\S+)",
-                "uriFormat": "%s",
-                "action": "openExternally"
-            }
+            "justMyCode": true
         }
     ]
 }
